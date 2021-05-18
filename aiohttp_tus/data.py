@@ -10,7 +10,7 @@ import attr
 from aiohttp import web
 
 from .annotations import DictStrAny, JsonDumps, JsonLoads
-from .constants import APP_TUS_CONFIG_KEY
+from .constants import APP_TUS_CONFIG_KEY, APP_TUS_UPLOAD_URL_PREFIX_KEY
 
 
 @attr.dataclass(frozen=True, slots=True)
@@ -188,6 +188,11 @@ def get_config(request: web.Request) -> Config:
     info = route.get_info()
 
     config_key = info.get("formatter") or info["path"]
+
+    # Ensure the upload URL prefix is removed
+    upload_url_prefix = request.config_dict[APP_TUS_UPLOAD_URL_PREFIX_KEY]
+    config_key = remove_url_prefix(config_key, upload_url_prefix)
+
     if config_key.endswith(r"/{resource_uid}"):
         config_key = get_upload_url(config_key)
 
@@ -232,3 +237,10 @@ def set_config(app: web.Application, upload_url: str, config: Config) -> None:
             "Please pass other `upload_url` keyword argument in `setup_tus` function."
         )
     app[APP_TUS_CONFIG_KEY][upload_url] = config
+
+
+# URL prefix remover
+def remove_url_prefix(resource_url: str, prefix: str) -> str:
+    if prefix != "" and resource_url.startswith(prefix):
+        resource_url = resource_url[len(prefix):]
+    return resource_url

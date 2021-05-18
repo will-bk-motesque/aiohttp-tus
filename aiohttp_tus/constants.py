@@ -1,4 +1,5 @@
 APP_TUS_CONFIG_KEY = "tus_config"
+APP_TUS_UPLOAD_URL_PREFIX_KEY = "tus_upload_url_prefix"
 
 HEADER_CACHE_CONTROL = "Cache-Control"
 HEADER_CONTENT_LENGTH = "Content-Length"

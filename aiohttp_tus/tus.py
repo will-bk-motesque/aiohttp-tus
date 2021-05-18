@@ -5,7 +5,7 @@ from aiohttp import web
 
 from . import views
 from .annotations import Decorator, Handler, JsonDumps, JsonLoads
-from .constants import APP_TUS_CONFIG_KEY
+from .constants import APP_TUS_CONFIG_KEY, APP_TUS_UPLOAD_URL_PREFIX_KEY
 from .data import Config, get_resource_url, ResourceCallback, set_config
 
 
@@ -20,6 +20,7 @@ def setup_tus(
     on_upload_done: ResourceCallback = None,
     json_dumps: JsonDumps = json.dumps,
     json_loads: JsonLoads = json.loads,
+    upload_url_prefix: str = "",
 ) -> web.Application:
     """Setup tus protocol server implementation for aiohttp.web application.
 
@@ -65,6 +66,9 @@ def setup_tus(
     :param json_loads:
         Similarly to ``json_dumps``, but for loading data from JSON metadata files.
         By default: :func:`json.loads`
+    :param upload_url_prefix:
+        It is useful when you want to use this app as a sub_app. Example prefix:
+        ``/api/v1``. By default: ``""``
     """
 
     def decorate(handler: Handler) -> Handler:
@@ -75,9 +79,13 @@ def setup_tus(
     # Ensure support of multiple tus upload URLs for one application
     app.setdefault(APP_TUS_CONFIG_KEY, {})
 
+    # Setting the upload_url_prefix
+    app.setdefault(APP_TUS_UPLOAD_URL_PREFIX_KEY, str(upload_url_prefix).strip())
+
     # Need to find out canonical dynamic resource URL if any and use it for storing
     # tus config into the app
-    canonical_upload_url = web.DynamicResource(upload_url).canonical
+    # Altered to allow empty upload_url
+    canonical_upload_url = "" if str(upload_url).strip() == "" else web.DynamicResource(upload_url).canonical
 
     # Store tus config in application
     config = Config(
